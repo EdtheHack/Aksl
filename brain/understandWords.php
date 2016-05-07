@@ -31,38 +31,23 @@ function findNestedSentences($wordsDetailed) {  //find noun first, then a verb, 
 
             //$split = array_slice($wordsDetailed, $sentenceEnd, $sentenceStart - $sentenceEnd - 1);
             $split = array_slice($wordsDetailed, $sentenceEnd, $sentenceStart - $sentenceEnd);
-            echo "<br>Split";
-            print_r($split);
 
             $sentenceEnd = findSentenceEnd($i, $wordsDetailed);
             $i = $sentenceEnd - 1;
 
             //$SBAR = array("node" => "SBAR", $wordsDetailed[$sentenceStart - 1] , array_slice($wordsDetailed, $sentenceStart, $sentenceEnd - $sentenceStart));
-            //echo "<br>SBAR";
-            //print_r($SBAR);
+
             $nested = array_slice($wordsDetailed, $sentenceStart, $sentenceEnd - $sentenceStart);
 
             //echo "END :". $sentenceEnd . " - START:" . $sentenceStart;
             //$SBAR[1] = findNestedSentences($SBAR[1]);
             $nested = findNestedSentences($nested);
-            //echo "<br>NESTED";
-            //print_r($nested);
 
             $splitAndNest = array_merge($split, array($nested));
 
-            //echo "<br>SPLIT AND NESTED";
-            //print_r($splitAndNest);
-
             $splitAndNest = understandSentence($splitAndNest);
 
-            //echo "<br> SPLIT AND NEST AFTER UNDERSTAND";
-            //print_r($splitAndNest);
-
-
             $nestedSentences = array_merge($nestedSentences, $splitAndNest);
-
-            echo "<br> ADDED SENTENCE";
-            print_r($nestedSentences);
 
             $foundSentence = true;
         }
