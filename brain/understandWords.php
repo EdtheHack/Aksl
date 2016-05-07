@@ -244,8 +244,6 @@ function understandSentence($words){
         //    $GLOBALS['sentenceStr'] = $GLOBALS['sentenceStr']. "(UNKN)";
         //}
 
-        echo "<br> WORDS: ";
-        print_r($word);
         if (isset($word['node']) && ($word['node'] == 'S' || $word['node'] == 'SBAR')) {
             echo "<br>---- NODE ----<br>";
             $foundSentenceNode = true;
