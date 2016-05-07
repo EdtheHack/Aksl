@@ -1,0 +1,11 @@
+<?php
+function gen_id ($table, $idRow, $db_con) {
+    $id = rand(0, 999999999);
+    $stmt = $db_con->prepare("SELECT * FROM $table WHERE $idRow = '$id';");
+    $stmt->execute();
+    if ($stmt->rowCount() > 0) {
+        gen_id($table, $idRow, $db_con);
+    }
+    return $id;
+}
+?>
