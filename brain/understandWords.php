@@ -3,7 +3,13 @@
 $GLOBALS['order'] = "";
 $GLOBALS['orders'] = [];
 
-function findNestedSentences($wordsDetailed) {  //find noun first, then a verb, then a noun, then a verb
+/*
+ * Find noun first, then a verb, then a noun, then a verb
+ * It is recursive in order to find sentences nested within nested sentences etc.
+ * This puts the sentence through the understandSentence function which turns words into the tree
+ */
+
+function findNestedSentences($wordsDetailed) {
     $nounVerbCount = 0;
     $foundNoun = false;
     $foundSentence = false;
@@ -14,34 +20,34 @@ function findNestedSentences($wordsDetailed) {  //find noun first, then a verb, 
 
     $nestedSentences = [];
 
-    for ($i = 0; $i < count($wordsDetailed); $i++) {
+    for ($i = 0; $i < count($wordsDetailed); $i++) {  //loop through all words
         echo "<br> COUNT = " . $i;
         if ($foundNoun == true && ($wordsDetailed[$i]['type'] == 'verb' || $wordsDetailed[$i]['type'] == 'adverb' || $wordsDetailed[$i]['type'] == 'auxiliary')) {
-            $nounVerbCount++;
-            $foundNoun = false;
+            $nounVerbCount++;    //increase count of noun/verb combinations
+            $foundNoun = false;  //set this back to false so we need to find another noun/verb combination again
         }
-        if ($wordsDetailed[$i]['type'] == 'noun' || $wordsDetailed[$i]['type'] == 'pronoun') {
+        if ($wordsDetailed[$i]['type'] == 'noun' || $wordsDetailed[$i]['type'] == 'pronoun') {  //find a noun first
             $foundNoun = true;
             //echo "<br>" . $wordsDetailed[$i]['type'] . " - ". $wordsDetailed[$i]['word'] . "<br>";
         }
 
-        if ($nounVerbCount > 1) {
+        if ($nounVerbCount > 1) {  //if noun/verb count is greater than 1
             $nounVerbCount = 1;
             $sentenceStart = findSentenceStart($i, $wordsDetailed);
 
             //$split = array_slice($wordsDetailed, $sentenceEnd, $sentenceStart - $sentenceEnd - 1);
-            $split = array_slice($wordsDetailed, $sentenceEnd, $sentenceStart - $sentenceEnd);
+            $split = array_slice($wordsDetailed, $sentenceEnd, $sentenceStart - $sentenceEnd);  //remove the first part of the array to separate the nested sentence
 
             $sentenceEnd = findSentenceEnd($i, $wordsDetailed);
             $i = $sentenceEnd - 1;
 
             //$SBAR = array("node" => "SBAR", $wordsDetailed[$sentenceStart - 1] , array_slice($wordsDetailed, $sentenceStart, $sentenceEnd - $sentenceStart));
 
-            $nested = array_slice($wordsDetailed, $sentenceStart, $sentenceEnd - $sentenceStart);
+            $nested = array_slice($wordsDetailed, $sentenceStart, $sentenceEnd - $sentenceStart);  //split the nested sentence from
 
             //echo "END :". $sentenceEnd . " - START:" . $sentenceStart;
             //$SBAR[1] = findNestedSentences($SBAR[1]);
-            $nested = findNestedSentences($nested);
+            $nested = findNestedSentences($nested);  //recursive check for nested sentences inside the sentence we just found
 
             $splitAndNest = array_merge($split, array($nested));
 
@@ -53,12 +59,17 @@ function findNestedSentences($wordsDetailed) {  //find noun first, then a verb, 
         }
     }
 
-    if ($foundSentence){
+    if ($foundSentence){  //if we find a sentence return the nested sentence.
         return $nestedSentences;
-    } else {
+    } else {  //if we dont find a sentence just return the words in the tree format.
         return understandSentence($wordsDetailed);
     }
 }
+
+/*
+ * Travel back through the words until you pass a noun and hit a verb
+ * This signals where the nested sentence starts
+ */
 
 function findSentenceStart($i, $wordsDetailed) {
     $searching = true;
@@ -75,6 +86,12 @@ function findSentenceStart($i, $wordsDetailed) {
     }
 }
 
+
+/*
+ * Travel forward through the words until you hit a conjunction or the end of the words
+ * This signals where the nested sentence ends
+ */
+
 function findSentenceEnd($i, $wordsDetailed) {
     $searching = true;
 
@@ -89,6 +106,11 @@ function findSentenceEnd($i, $wordsDetailed) {
         $i++;
     }
 }
+
+/*
+ * I cant remember what this does
+ * I don't think its used any more
+ */
 
 function getContext($words) {
     $i = 0;
@@ -123,6 +145,15 @@ function getContext($words) {
     return "you";  //does not maintain contexts
 }
 
+/*
+ * This gets the information about a word from the database and puts in into an array.
+ * e.g.
+ *
+ * ([word] => do, [type] => 'noun')
+ *
+ * It will also decide what to do with unknown words eventually
+ */
+
 function findWordInformation($words, $db_con) {
     $wordsDetailed = [];
     foreach ($words as $word) {
@@ -153,6 +184,11 @@ function findWordInformation($words, $db_con) {
     return $wordsDetailed;
 }
 
+/*
+ * I cant remember what this does
+ * I don't think its used any more
+ */
+
 
 function thinkOfResponse($orders, $db_con) {
     for ($i = count($orders)- 1; $i >= 0; $i--) {
@@ -165,6 +201,12 @@ function thinkOfResponse($orders, $db_con) {
     echo "<br>";
     echo "<br>";
 }
+
+/*
+ * I cant remember what this does
+ * I don't think its used any more
+ */
+
 
 function memoriseSentenceStructure($sentence, $db_con, $words, $convId) {
     $stmt = $db_con->prepare("SELECT * FROM sentencestructures WHERE ss = :value;");
@@ -194,6 +236,11 @@ function memoriseSentenceStructure($sentence, $db_con, $words, $convId) {
     }*/
 }
 
+/*
+ * I cant remember what this does
+ * I don't think its used any more
+ */
+
 function findUnknownWord($words, $position) {
     $wordsBeforeUnk = [];
     $wordsAfterUnk = [];
@@ -222,6 +269,17 @@ function findUnknownWord($words, $position) {
     return "unknownNEEDSWORK";
 }
 
+/*
+ * This function turns the words into a tree from the root of the tree.
+ * It is primarily based around finding a combination of word types
+ *
+ * e.g.
+ *
+ * NOUN -> VERB   =   split into a nounphase then a verbphase
+ * VERB -> NOUN   =   split into a verbphase then a nounphase
+ */
+
+
 function understandSentence($words){
     //echo "<br><br>WORDS : ";
     //print_r($words);
@@ -244,7 +302,7 @@ function understandSentence($words){
         //    $GLOBALS['sentenceStr'] = $GLOBALS['sentenceStr']. "(UNKN)";
         //}
 
-        if (isset($word['node']) && ($word['node'] == 'S' || $word['node'] == 'SBAR')) {
+        if (isset($word['node']) && ($word['node'] == 'S' || $word['node'] == 'SBAR')) {    //Check what the word is first.
             echo "<br>---- NODE ----<br>";
             $foundSentenceNode = true;
         } else if ($word['type'] == 'noun' || $word['type'] == 'pronoun' || $word['type'] == 'determiner' || $word['type'] == 'adjective' ) {
@@ -255,12 +313,11 @@ function understandSentence($words){
             $foundInterjection = true;
         } else if ($word['type'] == 'conjunction') {
             $foundCon = true;
-            echo "SFEOIUN IUFHIOFHI";
         } else if ($word['type'] == 'auxiliary') {
             $foundAux = true;
         }
 
-        if ($foundSentenceNode && $foundNoun) {
+        if ($foundSentenceNode && $foundNoun) {     //Check a whole bunch of combinations and split into certain phases
             array_push($tree, nounPhase(array_slice($words, $split, $i)));
             array_push($tree, $word);
         } else if ($foundVerb && $foundCon) {
@@ -332,6 +389,25 @@ function understandSentence($words){
     return $tree;
 }
 
+/*
+ * This function turns the words into a tree from a nounphase.
+ * It is primarily based around finding a combination of word types
+ *
+ * e.g.
+ *
+ * NOUN -> PREPOSITION   =   split into a prepositionphase
+ *
+ * Also it adds single nodes like adjectives to the nounphase
+ *
+ * e.g.
+ *
+ * ADJECTIVE   =   simply add an adjective to the phase
+ * NOUN   =   simply add a noun to the phase
+ * PRONOUN   =   simply add a pronoun to the phase
+ * DETERMINER   =   simply add a determiner to the phase
+ */
+
+
 function nounPhase($words) {
     $GLOBALS['sentenceStr'] = $GLOBALS['sentenceStr']. "NP(";
     $nounPhase = ['node' => "NP"];
@@ -395,6 +471,10 @@ function nounPhase($words) {
     return $nounPhase;
 }
 
+/*
+ * This function turns the words into a tree from a prepositionphase.
+ */
+
 function preposPhase($words) {
     $GLOBALS['sentenceStr'] = $GLOBALS['sentenceStr']. "(PP";
     $preposPhase = ['node' => "PP"];
@@ -413,6 +493,17 @@ function preposPhase($words) {
     }
     return $preposPhase;
 }
+
+/*
+ * This function turns the words into a tree from a verbphase.
+ * It is primarily based around finding a combination of word types
+ *
+ * e.g.
+ *
+ * VERB -> NOUN   =   add a verb to the verbphase then go into a nounphase
+ * VERB -> VERB   =   add a verb to the verbphase then go into a verbphase
+ * ADVERB -> VERB   =   add an adverb to the verbphase then go into a verbphase
+ */
 
 function verbPhase($words) {
     $GLOBALS['sentenceStr'] = $GLOBALS['sentenceStr']. "VP(";
@@ -462,6 +553,11 @@ function verbPhase($words) {
 
     return $verbPhase;
 }
+
+/*
+ * Loop through the tree and read information...
+ * somehow
+ */
 
 function extractInformation($sentence) {
     $info = "";

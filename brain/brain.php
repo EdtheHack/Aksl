@@ -27,20 +27,6 @@ $GLOBALS['sentenceRegex'] = '';
 $words = explode(" " ,$_POST["text"]);
 $wordsDetailed = [];
 
-foreach ($words as $word) {
-    $stmt = $db_con->prepare("SELECT * FROM english WHERE word = :value;");
-    $stmt->bindParam(':value', $word);
-    if ($stmt->execute()) {
-        if ($stmt->rowCount() > 0) {
-            while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-                array_push($wordsDetailed, $row);
-            }
-        } else {
-            array_push($wordsDetailed, array("type" => "unknown", "word" => "-?-"));
-        }
-    }
-}
-
 $wordsDetailed = findWordInformation($words, $db_con);
 $nestedSentences = findNestedSentences($wordsDetailed);
 
