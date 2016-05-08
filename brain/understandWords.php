@@ -157,14 +157,18 @@ function getContext($words) {
 function findWordInformation($words, $db_con) {
     $wordsDetailed = [];
     foreach ($words as $word) {
-        $stmt = $db_con->prepare("SELECT * FROM english WHERE word = :value;");
-        $stmt->bindParam(':value', $word);
-        if ($stmt->execute()) {
-            if ($stmt->rowCount() > 0) {
-                while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-                    array_push($wordsDetailed, $row);
+        $row = checkIfExists($word,$db_con);
+        if($row){
+            array_push($wordsDetailed, $row[0]);
+        } else {
+            if(substr($word, -1) == "s"){
+                if($row = checkIfExists(substr($word, 0, -1), $db_con)){
+                    $row[0]['tags']= "plural";
+                    array_push($wordsDetailed, $row[0]);
+                } else {
+                    array_push($wordsDetailed, array("type" => "unknown", "word" => $word, "meaning" => ""));
                 }
-            } else {
+            }else {
                 array_push($wordsDetailed, array("type" => "unknown", "word" => $word, "meaning" => ""));
             }
         }
@@ -182,6 +186,26 @@ function findWordInformation($words, $db_con) {
     //echo "<br>";
 
     return $wordsDetailed;
+}
+function checkIfExists($word, $db_con){
+    $wordResults=[];
+    $stmt = $db_con->prepare("SELECT * FROM english WHERE word = :value;");
+    $stmt->bindParam(':value', $word);
+    if ($stmt->execute()) {
+        if ($stmt->rowCount() > 0) {
+            while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+                array_push($wordResults, $row);
+            }
+        } else {
+            return false;
+        }
+    } else {
+        return false;
+    }
+    return $wordResults;
+}
+function findPlural($word, $db_con){
+
 }
 
 /*
@@ -279,7 +303,7 @@ function findUnknownWord($words, $position) {
  * VERB -> NOUN   =   split into a verbphase then a nounphase
  */
 
-
+//TODO THIS IS YOUR JOB CALVIN YOU FUKBOI
 function understandSentence($words){
     //echo "<br><br>WORDS : ";
     //print_r($words);
