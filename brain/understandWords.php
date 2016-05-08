@@ -305,8 +305,8 @@ function findUnknownWord($words, $position) {
 
 //TODO THIS IS YOUR JOB CALVIN YOU FUKBOI
 function understandSentence($words){
-    //echo "<br><br>WORDS : ";
-    //print_r($words);
+    echo "<br><br>WORDS : ";
+    print_r($words);
 
     $GLOBALS['sentenceStr'] = $GLOBALS['sentenceStr']. "S(";
     $tree = ['node' => "S"];
@@ -346,28 +346,28 @@ function understandSentence($words){
             array_push($tree, $word);
         } else if ($foundVerb && $foundCon) {
             array_push($tree, verbPhase(array_slice($words, $split, $i)));
-            array_push($tree, ['node' => 'CON', "word" => $word['word'], "meaning" => $word['meaning']]);
+            array_push($tree, createLeafNode("CON", $word));
             $foundNoun = false;
             $foundVerb = false;
             $foundCon = false;
             $split = $i + 1;
         } else if ($foundNoun && $foundCon) {
             array_push($tree, nounPhase(array_slice($words, $split, $i)));
-            array_push($tree, ['node' => 'CON', "word" => $word['word'], "meaning" => $word['meaning']]);
+            array_push($tree, createLeafNode("CON", $word));
             $foundNoun = false;
             $foundVerb = false;
             $foundCon = false;
             $split = $i + 1;
         } else if ($foundVerb && $foundAux) {
             array_push($tree, verbPhase(array_slice($words, $split, $i)));
-            array_push($tree, ['node' => 'AUX', "word" => $word['word'], "meaning" => $word['meaning']]);
+            array_push($tree, createLeafNode("AUX", $word));
             $foundNoun = false;
             $foundVerb = false;
             $foundAux = false;
             $split = $i + 1;
         } else if ($foundNoun && $foundAux) {
             array_push($tree, nounPhase(array_slice($words, $split, $i)));
-            array_push($tree, ['node' => 'AUX', "word" => $word['word'], "meaning" => $word['meaning']]);
+            array_push($tree, createLeafNode("AUX", $word));
             $foundNoun = false;
             $foundVerb = false;
             $foundAux = false;
@@ -396,13 +396,13 @@ function understandSentence($words){
         } else if ($foundSentenceNode) {
             array_push($tree, $word);
         } else if ($foundCon) {
-            array_push($tree, ['node' => 'CON', "word" => $word['word'], "meaning" => $word['meaning']]);
+            array_push($tree, createLeafNode("CON", $word));
             $foundNoun = false;
             $foundVerb = false;
             $foundCon = false;
             $split = $i + 1;
         } else if ($foundAux) {
-            array_push($tree, ['node' => 'AUX', "word" => $word['word'], "meaning" => $word['meaning']]);
+            array_push($tree, createLeafNode("AUX", $word));
             $foundNoun = false;
             $foundVerb = false;
             $foundAux = false;
@@ -411,6 +411,13 @@ function understandSentence($words){
         $i++;
     }
     return $tree;
+}
+
+/*
+ * Returns an array type that contains the correct format for storage.
+ */
+function createLeafNode($nodeType, $word){
+    return ['node' => $nodeType, 'wordDetailed' => $word];
 }
 
 /*
@@ -449,31 +456,31 @@ function nounPhase($words) {
             $foundSentenceNode = true;
         } else if ($word['type'] == 'determiner') {
             $GLOBALS['sentenceStr'] = $GLOBALS['sentenceStr']. "(DET)";
-            array_push($nounPhase, ['node' => "DET", "word" => $word['word'], "meaning" => $word['meaning']]);
+            array_push($nounPhase, createLeafNode("DET", $word));
             $foundDeterminer = true;
         } else if ($word['type'] == 'interjection') {
-            array_push($nounPhase, ['node' => "INJ", "word" => $word['word'], "meaning" => $word['meaning']]);
+            array_push($nounPhase, createLeafNode("INJ", $word));
             $GLOBALS['sentenceStr'] = $GLOBALS['sentenceStr']. "(INJ)";
             $foundDeterminer = true;
         } else if ($word['type'] == 'adjective') {
-            array_push($nounPhase, ['node' => 'ADJ', "word" => $word['word'], "meaning" => $word['meaning']]);
+            array_push($nounPhase, createLeafNode("ADJ", $word));
             $GLOBALS['sentenceStr'] = $GLOBALS['sentenceStr']. "(ADJ)";
             $foundAdj = true;
         } else if ($word['type'] == 'noun') {
             $GLOBALS['sentenceStr'] = $GLOBALS['sentenceStr']. "(NN)";
-            array_push($nounPhase, ['node' => 'NN', 'word' => $word['word'], "meaning" => $word['meaning']]);
+            array_push($nounPhase, createLeafNode("NN", $word));
             $foundNoun = true;
         } else if ($word['type'] == 'auxiliary') {
             $GLOBALS['sentenceStr'] = $GLOBALS['sentenceStr']. "(AUX)";
-            array_push($nounPhase, ['node' => 'AUX','word' => $word['word'], "meaning" => $word['meaning']]);
+            array_push($nounPhase, createLeafNode("AUX", $word));
             $foundNoun = true;
         } else if ($word['type'] == 'pronoun') {
             $GLOBALS['sentenceStr'] = $GLOBALS['sentenceStr']. "(NNPRO)";
-            array_push($nounPhase, ['node' => 'NNPRO', "word" => $word['word'], "meaning" => $word['meaning']]);
+            array_push($nounPhase, createLeafNode("NNPRO", $word));
             $foundNoun = true;
         } else if ($word['type'] == 'conjunction') {
             $GLOBALS['sentenceStr'] = $GLOBALS['sentenceStr']. "(CON)";
-            array_push($nounPhase, ['node' => 'CON', "word" => $word['word'], "meaning" => $word['meaning']]);
+            array_push($nounPhase, createLeafNode("CON", $word));
         }
 
         if ($foundSentenceNode == false) {
@@ -495,6 +502,8 @@ function nounPhase($words) {
     return $nounPhase;
 }
 
+
+
 /*
  * This function turns the words into a tree from a prepositionphase.
  */
@@ -509,7 +518,7 @@ function preposPhase($words) {
         $i++;
         if ($word['type'] == 'preposition') {
             $GLOBALS['sentenceStr'] = $GLOBALS['sentenceStr']. "(P)";
-            array_push($preposPhase, ['node' => 'P', "word" => $word['word'], "meaning" => $word['meaning']]);
+            array_push($preposPhase, createLeafNode("P", $word));
             array_push($preposPhase, nounPhase(array_slice($words, $i, count($words))));
             $GLOBALS['sentenceStr'] = $GLOBALS['sentenceStr']. ")";
             return $preposPhase;
@@ -558,18 +567,18 @@ function verbPhase($words) {
         if ($foundSentenceNode == false) {
             if ($word['type'] == 'auxiliary') {
                 $GLOBALS['sentenceStr'] = $GLOBALS['sentenceStr'] . "(AUX)";
-                array_push($verbPhase, ['node' => 'AUX', "word" => $word['word'], "meaning" => $word['meaning']]);
+                array_push($verbPhase, createLeafNode("AUX", $word));
                 $foundVerb = true;
             } else if ($word['type'] == 'verb') {
                 $GLOBALS['sentenceStr'] = $GLOBALS['sentenceStr'] . "(V)";
-                array_push($verbPhase, ['node' => 'V', "word" => $word['word'], "meaning" => $word['meaning']]);
+                array_push($verbPhase, createLeafNode("V", $word));
                 $foundVerb = true;
             } else if ($word['type'] == 'adverb') {
                 $GLOBALS['sentenceStr'] = $GLOBALS['sentenceStr'] . "(ADV)";
-                array_push($verbPhase, ['node' => 'ADV', "word" => $word['word'], "meaning" => $word['meaning']]);
+                array_push($verbPhase, createLeafNode("ADV", $word));
                 $foundVerb = true;
             } else if ($word['type'] == 'conjunction') {
-                array_push($verbPhase, ['node' => 'CON', "word" => $word['word'], "meaning" => $word['meaning']]);
+                array_push($verbPhase, createLeafNode("CON", $word));
             }
             $i++;
         }
@@ -590,12 +599,12 @@ function extractInformation($sentence) {
     //echo "<br>SENTENCE:";
     //print_r($sentence);
 
-    if (isset($sentence['word'])) {
+    if (isset($sentence['wordDetailed'])) {
         //echo $sentence['word'];
         //echo "<br>";
-        $info = $info . $sentence['word'];
+        $info = $info . $sentence['wordDetailed']['word'];
         echo "<br>INFO: " . $info;
-        return  $sentence['word'];
+        return  $sentence['wordDetailed']['word'];
     } else {
         foreach ($sentence as $node) {
             //print_r($node);
