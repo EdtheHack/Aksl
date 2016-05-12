@@ -1,0 +1,12 @@
+.nodeRow {
+    position: relative;
+    display: flex;
+    flex: 1;
+    text-align: center;
+    padding-top: 20px;
+}
+.nodeRow p{
+    position: absolute;
+    margin-left: 50%;
+    border-bottom: 1px #BBB solid;
+}

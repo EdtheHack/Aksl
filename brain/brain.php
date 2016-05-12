@@ -49,7 +49,9 @@ echo "<br> SENTENCE: ";
 print_r($nestedSentences);
 echo "<br>";
 echo "<br>";
+echo "<div style='width: 1000px; display: flex; position: relative;'>";
 displayTree($nestedSentences);
+echo "</div>";
 echo "<br>";
 echo "<br>";
 

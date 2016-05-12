@@ -112,7 +112,22 @@ function findSentenceEnd($i, $wordsDetailed) {
  */
 
 function displayTree($root) {
+    if(is_a($root, "Node")) {
 
+        echo "<div class='nodeRow'>";
+
+        echo "<p>".$root->getValue()."<p>";
+        foreach($root->getChildren() as $child) {
+            displayTree($child);
+        }
+
+        echo "</div>";
+
+    } else {
+        echo "<div class='nodeRow'>";
+            echo "<p>".$root['word']."<p>";
+        echo "</div>";
+    }
 }
 
 /*
@@ -547,7 +562,7 @@ function preposPhase($words) {
 
 function verbPhase($words) {
     $GLOBALS['sentenceStr'] = $GLOBALS['sentenceStr']. "VP(";
-    $verbPhase = new Node("NP", []);//$verbPhase = ['node' => "VP"];
+    $verbPhase = new Node("VP", []);//$verbPhase = ['node' => "VP"];
     $foundVerb = false;
     $foundSentenceNode = false;
     $i = 0;

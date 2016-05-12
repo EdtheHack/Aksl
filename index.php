@@ -12,6 +12,7 @@ if (isset($_POST['text'])){
 <html>
     <head>
         <title>Aksl</title>
+        <link rel="stylesheet" type="text/css" href="Tree/nodeStyles.css">
         <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js "></script>
         <script>
             function converse(){
