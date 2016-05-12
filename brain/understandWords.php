@@ -18,7 +18,7 @@ function findNestedSentences($wordsDetailed) {
     //echo "NESTED SENTENCE FINDER";
     //print_r($wordsDetailed);
 
-    $nestedSentences = [];
+    $nestedSentences = new Node("ROOT", []);
 
     for ($i = 0; $i < count($wordsDetailed); $i++) {  //loop through all words
         echo "<br> COUNT = " . $i;
@@ -53,7 +53,7 @@ function findNestedSentences($wordsDetailed) {
 
             $splitAndNest = understandSentence($splitAndNest);
 
-            $nestedSentences = array_merge($nestedSentences, $splitAndNest);
+            $nestedSentences->addChild($splitAndNest);
 
             $foundSentence = true;
         }
@@ -105,6 +105,14 @@ function findSentenceEnd($i, $wordsDetailed) {
         }
         $i++;
     }
+}
+
+/*
+ * Displays the node in a BEAUTIFUL format
+ */
+
+function displayTree($root) {
+
 }
 
 /*
@@ -294,6 +302,13 @@ function findUnknownWord($words, $position) {
 }
 
 /*
+ * Returns an array type that contains the correct format for storage.
+ */
+function createLeafNode($nodeType, $word){
+    return ['node' => $nodeType, 'wordDetailed' => $word];
+}
+
+/*
  * This function turns the words into a tree from the root of the tree.
  * It is primarily based around finding a combination of word types
  *
@@ -303,13 +318,12 @@ function findUnknownWord($words, $position) {
  * VERB -> NOUN   =   split into a verbphase then a nounphase
  */
 
-//TODO THIS IS YOUR JOB CALVIN YOU FUKBOI
 function understandSentence($words){
-    echo "<br><br>WORDS : ";
-    print_r($words);
+    //echo "<br><br>WORDS : ";
+    //print_r($words);
 
     $GLOBALS['sentenceStr'] = $GLOBALS['sentenceStr']. "S(";
-    $tree = ['node' => "S"];
+    $tree = new Node("S", []);
     $i = 0;
     $split=0;
 
@@ -326,7 +340,7 @@ function understandSentence($words){
         //    $GLOBALS['sentenceStr'] = $GLOBALS['sentenceStr']. "(UNKN)";
         //}
 
-        if (isset($word['node']) && ($word['node'] == 'S' || $word['node'] == 'SBAR')) {    //Check what the word is first.
+        if (is_a($word, 'Node')) {    //Check what the word is first.
             echo "<br>---- NODE ----<br>";
             $foundSentenceNode = true;
         } else if ($word['type'] == 'noun' || $word['type'] == 'pronoun' || $word['type'] == 'determiner' || $word['type'] == 'adjective' ) {
@@ -342,67 +356,67 @@ function understandSentence($words){
         }
 
         if ($foundSentenceNode && $foundNoun) {     //Check a whole bunch of combinations and split into certain phases
-            array_push($tree, nounPhase(array_slice($words, $split, $i)));
-            array_push($tree, $word);
+            $tree->addChild(nounPhase(array_slice($words, $split, $i)));
+            $tree->addChild($word);
         } else if ($foundVerb && $foundCon) {
-            array_push($tree, verbPhase(array_slice($words, $split, $i)));
-            array_push($tree, createLeafNode("CON", $word));
+            $tree->addChild(verbPhase(array_slice($words, $split, $i)));
+            $tree->addChild(new Node("CON", [$word]));
             $foundNoun = false;
             $foundVerb = false;
             $foundCon = false;
             $split = $i + 1;
         } else if ($foundNoun && $foundCon) {
-            array_push($tree, nounPhase(array_slice($words, $split, $i)));
-            array_push($tree, createLeafNode("CON", $word));
+            $tree->addChild(nounPhase(array_slice($words, $split, $i)));
+            $tree->addChild(new Node("CON", [$word]));
             $foundNoun = false;
             $foundVerb = false;
             $foundCon = false;
             $split = $i + 1;
         } else if ($foundVerb && $foundAux) {
-            array_push($tree, verbPhase(array_slice($words, $split, $i)));
-            array_push($tree, createLeafNode("AUX", $word));
+            $tree->addChild(verbPhase(array_slice($words, $split, $i)));
+            $tree->addChild(new Node("AUX", [$word]));
             $foundNoun = false;
             $foundVerb = false;
             $foundAux = false;
             $split = $i + 1;
         } else if ($foundNoun && $foundAux) {
-            array_push($tree, nounPhase(array_slice($words, $split, $i)));
-            array_push($tree, createLeafNode("AUX", $word));
+            $tree->addChild(nounPhase(array_slice($words, $split, $i)));
+            $tree->addChild(new Node("AUX", [$word]));
             $foundNoun = false;
             $foundVerb = false;
             $foundAux = false;
             $split = $i + 1;
         } else if ($foundNoun && ($word['type'] == 'verb' || $word['type'] == 'adverb' || $word['type'] == 'auxiliary')) {
-            array_push($tree, nounPhase(array_slice($words, $split, $i)));
+            $tree->addChild(nounPhase(array_slice($words, $split, $i)));
             $GLOBALS['sentenceStr'] = $GLOBALS['sentenceStr'] . ")";
-            array_push($tree, verbPhase(array_slice($words, $i)));
+            $tree->addChild(verbPhase(array_slice($words, $i)));
             $GLOBALS['sentenceStr'] = $GLOBALS['sentenceStr'] . "))";
             return $tree;
         } else if ($foundVerb && ($word['type'] == 'noun' || $word['type'] == 'pronoun' || $word['type'] == 'determiner' || $word['type'] == 'adjective')) {
-            array_push($tree, verbPhase(array_slice($words, $split, $i)));
+            $tree->addChild(verbPhase(array_slice($words, $split, $i)));
             $GLOBALS['sentenceStr'] = $GLOBALS['sentenceStr'] . ")";
-            array_push($tree, nounPhase(array_slice($words, $i)));
+            $tree->addChild(nounPhase(array_slice($words, $i)));
             $GLOBALS['sentenceStr'] = $GLOBALS['sentenceStr'] . "))";
             return $tree;
         } else if ($foundNoun && $i >= count($words) - 1) {
-            array_push($tree, nounPhase(array_slice($words, $split)));
+            $tree->addChild(nounPhase(array_slice($words, $split)));
             $GLOBALS['sentenceStr'] = $GLOBALS['sentenceStr'] . "))";
         } else if ($foundInterjection && $i >= count($words) - 1) {
-            array_push($tree, nounPhase(array_slice($words, $split)));
+            $tree->addChild(nounPhase(array_slice($words, $split)));
             $GLOBALS['sentenceStr'] = $GLOBALS['sentenceStr'] . "))";
         } else if ($foundVerb && $i >= count($words) - 1) {
-            array_push($tree, verbPhase(array_slice($words, $split)));
+            $tree->addChild(verbPhase(array_slice($words, $split)));
             $GLOBALS['sentenceStr'] = $GLOBALS['sentenceStr'] . "))";
         } else if ($foundSentenceNode) {
-            array_push($tree, $word);
+            $tree->addChild($word);
         } else if ($foundCon) {
-            array_push($tree, createLeafNode("CON", $word));
+            $tree->addChild(new Node("CON", [$word]));
             $foundNoun = false;
             $foundVerb = false;
             $foundCon = false;
             $split = $i + 1;
         } else if ($foundAux) {
-            array_push($tree, createLeafNode("AUX", $word));
+            $tree->addChild(new Node("AUX", [$word]));
             $foundNoun = false;
             $foundVerb = false;
             $foundAux = false;
@@ -411,13 +425,6 @@ function understandSentence($words){
         $i++;
     }
     return $tree;
-}
-
-/*
- * Returns an array type that contains the correct format for storage.
- */
-function createLeafNode($nodeType, $word){
-    return ['node' => $nodeType, 'wordDetailed' => $word];
 }
 
 /*
@@ -441,7 +448,7 @@ function createLeafNode($nodeType, $word){
 
 function nounPhase($words) {
     $GLOBALS['sentenceStr'] = $GLOBALS['sentenceStr']. "NP(";
-    $nounPhase = ['node' => "NP"];
+    $nounPhase = new Node("NP", []);
     $i = 0;
     $split=0;
     $foundDeterminer = false;
@@ -450,47 +457,47 @@ function nounPhase($words) {
     $foundSentenceNode = false;
 
     foreach ($words as $word) {
-        if (isset($word['node']) && ($word['node'] == 'S' || $word['node'] == 'SBAR')) {
+        if (is_a($word, 'Node')) {
             echo "<br>---- NODE ----<br>";
-            array_push($nounPhase, $word);
+            $nounPhase->addChild($word);
             $foundSentenceNode = true;
         } else if ($word['type'] == 'determiner') {
             $GLOBALS['sentenceStr'] = $GLOBALS['sentenceStr']. "(DET)";
-            array_push($nounPhase, createLeafNode("DET", $word));
+            $nounPhase->addChild(new Node("DET", [$word]));
             $foundDeterminer = true;
         } else if ($word['type'] == 'interjection') {
-            array_push($nounPhase, createLeafNode("INJ", $word));
+            $nounPhase->addChild(new Node("INJ", [$word]));
             $GLOBALS['sentenceStr'] = $GLOBALS['sentenceStr']. "(INJ)";
             $foundDeterminer = true;
         } else if ($word['type'] == 'adjective') {
-            array_push($nounPhase, createLeafNode("ADJ", $word));
+            $nounPhase->addChild(new Node("ADJ", [$word]));
             $GLOBALS['sentenceStr'] = $GLOBALS['sentenceStr']. "(ADJ)";
             $foundAdj = true;
         } else if ($word['type'] == 'noun') {
             $GLOBALS['sentenceStr'] = $GLOBALS['sentenceStr']. "(NN)";
-            array_push($nounPhase, createLeafNode("NN", $word));
+            $nounPhase->addChild(new Node("NN", [$word]));
             $foundNoun = true;
         } else if ($word['type'] == 'auxiliary') {
             $GLOBALS['sentenceStr'] = $GLOBALS['sentenceStr']. "(AUX)";
-            array_push($nounPhase, createLeafNode("AUX", $word));
+            $nounPhase->addChild(new Node("AUX", [$word]));
             $foundNoun = true;
         } else if ($word['type'] == 'pronoun') {
             $GLOBALS['sentenceStr'] = $GLOBALS['sentenceStr']. "(NNPRO)";
-            array_push($nounPhase, createLeafNode("NNPRO", $word));
+            $nounPhase->addChild(new Node("NNPRO", [$word]));
             $foundNoun = true;
         } else if ($word['type'] == 'conjunction') {
             $GLOBALS['sentenceStr'] = $GLOBALS['sentenceStr']. "(CON)";
-            array_push($nounPhase, createLeafNode("CON", $word));
+            $nounPhase->addChild(new Node("CON", [$word]));
         }
 
         if ($foundSentenceNode == false) {
             if ($foundNoun && ($word['type'] == 'preposition')) {
-                array_push($nounPhase, preposPhase(array_slice($words, $i)));
+                $nounPhase->addChild(preposPhase(array_slice($words, $i)));
                 $GLOBALS['sentenceStr'] = $GLOBALS['sentenceStr'] . ")";
                 return $nounPhase;
                 //$split = $i;
             } else if ($foundNoun && ($word['type'] == 'verb' || $word['type'] == 'adverb' || $word['type'] == 'auxiliary')) {
-                array_push($nounPhase, verbPhase(array_slice($words, $i)));
+                $nounPhase->addChild(verbPhase(array_slice($words, $i)));
                 $GLOBALS['sentenceStr'] = $GLOBALS['sentenceStr'] . ")";
                 return $nounPhase;
                 //$split = $i;
@@ -510,7 +517,7 @@ function nounPhase($words) {
 
 function preposPhase($words) {
     $GLOBALS['sentenceStr'] = $GLOBALS['sentenceStr']. "(PP";
-    $preposPhase = ['node' => "PP"];
+    $preposPhase = new Node("PP", []);
     $foundPrepos = false;
     $i = 0;
 
@@ -518,8 +525,8 @@ function preposPhase($words) {
         $i++;
         if ($word['type'] == 'preposition') {
             $GLOBALS['sentenceStr'] = $GLOBALS['sentenceStr']. "(P)";
-            array_push($preposPhase, createLeafNode("P", $word));
-            array_push($preposPhase, nounPhase(array_slice($words, $i, count($words))));
+            $preposPhase->addChild(new Node("P", [$word]));
+            $preposPhase->addChild(nounPhase(array_slice($words, $i)));
             $GLOBALS['sentenceStr'] = $GLOBALS['sentenceStr']. ")";
             return $preposPhase;
         }
@@ -540,26 +547,26 @@ function preposPhase($words) {
 
 function verbPhase($words) {
     $GLOBALS['sentenceStr'] = $GLOBALS['sentenceStr']. "VP(";
-    $verbPhase = ['node' => "VP"];
+    $verbPhase = new Node("NP", []);//$verbPhase = ['node' => "VP"];
     $foundVerb = false;
     $foundSentenceNode = false;
     $i = 0;
 
     foreach ($words as $word) {
-        if (isset($word['node']) && ($word['node'] == 'S' || $word['node'] == 'SBAR')) {
+        if (is_a($word, 'Node')) {
             echo "<br>---- NODE ----<br>";
-            array_push($verbPhase, $word);
+            $verbPhase->addChild($word);
             $foundSentenceNode = true;
         } else if ($foundVerb && ($word['type'] == 'verb' || $word['type'] == 'adverb')) {
-            array_push($verbPhase, verbPhase(array_slice($words, $i)));
+            $verbPhase->addChild(verbPhase(array_slice($words, $i)));
             $GLOBALS['sentenceStr'] = $GLOBALS['sentenceStr']. ")";
             return $verbPhase;
         } else if ($foundVerb && ($word['type'] == 'noun' || $word['type'] == 'pronoun' || $word['type'] == 'determiner' || $word['type'] == 'adjective')) {
-            array_push($verbPhase, nounPhase(array_slice($words, $i)));
+            $verbPhase->addChild(nounPhase(array_slice($words, $i)));
             $GLOBALS['sentenceStr'] = $GLOBALS['sentenceStr']. ")";
             return $verbPhase;
         } else if ($foundVerb && ($word['type'] == 'preposition')) {
-            array_push($verbPhase, preposPhase(array_slice($words, $i)));
+            $verbPhase->addChild(preposPhase(array_slice($words, $i)));
             $GLOBALS['sentenceStr'] = $GLOBALS['sentenceStr']. ")";
             return $verbPhase;
         }
@@ -567,18 +574,18 @@ function verbPhase($words) {
         if ($foundSentenceNode == false) {
             if ($word['type'] == 'auxiliary') {
                 $GLOBALS['sentenceStr'] = $GLOBALS['sentenceStr'] . "(AUX)";
-                array_push($verbPhase, createLeafNode("AUX", $word));
+                $verbPhase->addChild(new Node("AUX", [$word]));
                 $foundVerb = true;
             } else if ($word['type'] == 'verb') {
                 $GLOBALS['sentenceStr'] = $GLOBALS['sentenceStr'] . "(V)";
-                array_push($verbPhase, createLeafNode("V", $word));
+                $verbPhase->addChild(new Node("V", [$word]));
                 $foundVerb = true;
             } else if ($word['type'] == 'adverb') {
                 $GLOBALS['sentenceStr'] = $GLOBALS['sentenceStr'] . "(ADV)";
-                array_push($verbPhase, createLeafNode("ADV", $word));
+                $verbPhase->addChild(new Node("ADV", [$word]));
                 $foundVerb = true;
             } else if ($word['type'] == 'conjunction') {
-                array_push($verbPhase, createLeafNode("CON", $word));
+                $verbPhase->addChild(new Node("CON", [$word]));
             }
             $i++;
         }
@@ -598,6 +605,14 @@ function extractInformation($sentence) {
 
     //echo "<br>SENTENCE:";
     //print_r($sentence);
+
+    if ($sentence['node'] == 'NP') {
+        echo "<br><br>NOUN PHASE: " . $info;
+        createObjectSet($sentence);
+    }
+    if ($sentence['node'] == 'S') {
+        echo "<br>INTO SENTENCE: " . $info;
+    }
 
     if (isset($sentence['wordDetailed'])) {
         //echo $sentence['word'];
@@ -624,3 +639,61 @@ function extractInformation($sentence) {
     }
 }
 
+/*
+ * Puts a nounphase together then tries to add the nounphase to the database
+ */
+
+function createObjectSet($sentence) {
+    $nounPhaseWords = [];
+
+    foreach ($sentence as $word) {
+        if (isset($word['wordDetailed'])) {
+            array_push($nounPhaseWords, $word['wordDetailed']);
+        }
+    }
+
+    addSet($nounPhaseWords);
+}
+
+function addSet($nounPhaseWords) {
+    $db_con = BrainDB::getConnection();
+    $multiple = false;
+    $results = [];
+    $where = "";
+
+    foreach ($nounPhaseWords as $nounPhaseWord) {
+        if ($multiple == true) {
+            $where = $where . "OR ";
+        }
+        $where = $where . "word_id = '" . $nounPhaseWord['word_id'] . "' ";
+        $multiple = true;
+    }
+
+    if (count($nounPhaseWords) > 1) {
+        $stmt = $db_con->prepare("SELECT os1.set_id FROM object_sets AS os1 WHERE
+        (SELECT COUNT(*)FROM object_sets AS os2 WHERE os1.set_id=os2.set_id AND ($where)) = ". count($nounPhaseWords)." AND ($where) LIMIT 1");
+    } else {
+        $stmt = $db_con->prepare("SELECT os1.set_id FROM object_sets AS os1 WHERE
+        (SELECT COUNT(*)FROM object_sets AS os2 WHERE os1.set_id=os2.set_id) = ". count($nounPhaseWords)." AND ($where)");
+    }
+
+   // echo "<br><br>QUERY = " . $where;
+
+    if ($stmt->execute()) {
+        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            array_push($results, $row);
+        }
+        echo "<br>";
+        print_r($results);
+        echo "<br>";
+    } else {
+        echo "ERROR QUERYING BRAIN #braindamage";
+    }
+    /*
+    SELECT os1.set_id
+    FROM object_sets AS os1
+    WHERE (SELECT COUNT(*)
+       FROM object_sets AS os2
+       WHERE os1.set_id=os2.set_id)>1
+     */
+}

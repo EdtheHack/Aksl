@@ -12,6 +12,20 @@ $db_con = BrainDB::getConnection();
  */
 include_once "brain/understandWords.php";
 include_once "brain/functions.php";
+include_once "Tree/node.php";
+
+$node0 = new Node("S", []);
+$node1 = new Node("NP", []);
+$node2 = new Node("VP", []);
+$node3 = new Node("N", []);
+
+$node0->addChild($node1);
+$node0->addChild($node2);
+$node0->removeChild($node2);
+
+//$node2->addChild($node3);
+
+print_r($node0);
 
 /*
  * SET SOME GLOBAL VARIABLES
@@ -30,34 +44,15 @@ $wordsDetailed = [];
 $wordsDetailed = findWordInformation($words, $db_con);
 $nestedSentences = findNestedSentences($wordsDetailed);
 
-//$sentence = understandSentence($nestedSentences);  //can put nested sentences in here
-
-
 echo "<br>";
 echo "<br> SENTENCE: ";
 print_r($nestedSentences);
 echo "<br>";
 echo "<br>";
+displayTree($nestedSentences);
+echo "<br>";
+echo "<br>";
 
-//$objects = getObjects($wordsDetailed);
-//$context = getContext($wordsDetailed);
-//echo "<br><br>" . $context . "<br><br>";
-//$meanings = findMeaning($wordsDetailed);
-
-//$order = notRecursiveThing($wordsDetailed);
-//echo "<br>";
-//echo "<br>";
-//print_r($order);
-//echo "<br>";
-//echo "<br>";
-
-//$convId = gen_id('conversations','conversation_id', $db_con);
-//memoriseSentenceStructure($sentence, $db_con, $_POST["text"], $convId);
-
-extractInformation($nestedSentences);
-//$reply = thinkOfResponse($order, $db_con);
-//echo $reply;
-
-//print_r($sentence);
+//extractInformation($nestedSentences);
 
 ?>
