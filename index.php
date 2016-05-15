@@ -1,11 +1,11 @@
 <?php
 
 if (isset($_POST['text'])){
-    include "brain/brain.php";
+    include "Brain/brain.php";
 }
 
 //if (isset($_POST['text'])){
-    //include "brain/rateReply.php";
+    //include "Brain/rateReply.php";
 //}
 
 ?>
@@ -21,7 +21,7 @@ if (isset($_POST['text'])){
 
                 $.ajax({
                     type : "POST",
-                    url : "brain/understandWords.php",
+                    url : "Brain/understandWords.php",
                     data:({text: content
 
                     }),
@@ -41,7 +41,7 @@ if (isset($_POST['text'])){
 
                  $.ajax({
                  type : "POST",
-                 url : "brain/rateReply.php",
+                 url : "Brain/rateReply.php",
                  data:({text: text, convId: convId, reply: reply, rate: rate
 
                  }),

@@ -7,6 +7,7 @@
 }
 .nodeRow p{
     position: absolute;
-    margin-left: 50%;
+    margin: 0;
+    margin-left: 48%;
     border-bottom: 1px #BBB solid;
 }
